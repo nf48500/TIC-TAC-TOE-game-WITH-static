@@ -1,0 +1,92 @@
+{% load static  %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tic Tac Toe</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+</head>
+<body>
+  <div class="container">
+    <h1>❌⭕ Tic Tac Toe</h1>
+    <p>You are <b>X</b> · CPU is <b>O</b></p>
+    <div class="board" id="board"></div>
+    <button id="ttt-reset">Reset Board</button>
+    <p id="ttt-score">You 0 : 0 CPU · Draws 0</p>
+    <div id="ttt-status"></div>
+  </div>
+
+  <script>
+    const boardEl = document.getElementById('board');
+    const tttStatus = document.getElementById('ttt-status');
+    const tttReset = document.getElementById('ttt-reset');
+    const tttScore = document.getElementById('ttt-score');
+
+    let board = Array(9).fill(null);
+    let xWins=0, oWins=0, draws=0;
+
+    function drawBoard(){
+      boardEl.innerHTML='';
+      board.forEach((val, idx)=>{
+        const cell = document.createElement('div');
+        cell.className='cell';
+        cell.textContent = val || '';
+        cell.addEventListener('click', ()=> playerMove(idx));
+        boardEl.appendChild(cell);
+      });
+    }
+
+    function winner(b){
+      const lines = [ [0,1,2],[3,4,5],[6,7,8], [0,3,6],[1,4,7],[2,5,8], [0,4,8],[2,4,6] ];
+      for(const [a,b1,c] of lines){
+        if(b[a] && b[a]===b[b1] && b[a]===b[c]) return b[a];
+      }
+      if(b.every(Boolean)) return 'draw';
+      return null;
+    }
+
+    function playerMove(i){
+      if(board[i] || winner(board)) return;
+      board[i] = 'X';
+      updateUI();
+      const w = winner(board);
+      if(w) return endRound(w);
+      setTimeout(cpuMove, 250);
+    }
+
+    function cpuMove(){
+      let move = findBest('O');
+      if(move==null) move = findBest('X');
+      if(move==null && !board[4]) move = 4;
+      const corners = [0,2,6,8].filter(i=>!board[i]);
+      if(move==null && corners.length) move = corners[Math.floor(Math.random()*corners.length)];
+      if(move==null) move = board.findIndex(v=>!v);
+      if(move!=null){ board[move]='O'; }
+      updateUI();
+      const w = winner(board);
+      if(w) endRound(w);
+    }
+
+    function findBest(char){
+      for(let i=0;i<9;i++){
+        if(!board[i]){ board[i]=char; if(winner(board)===char){ board[i]=null; return i; } board[i]=null; }
+      }
+      return null;
+    }
+
+    function endRound(w){
+      if(w==='X'){ xWins++; tttStatus.textContent='🎉 You win!'; }
+      else if(w==='O'){ oWins++; tttStatus.textContent='🤖 CPU wins.'; }
+      else { draws++; tttStatus.textContent="It's a draw."; }
+      tttScore.textContent = `You ${xWins} : ${oWins} CPU · Draws ${draws}`;
+    }
+
+    function updateUI(){ drawBoard(); }
+    function resetBoard(){ board = Array(9).fill(null); tttStatus.textContent=''; updateUI(); }
+
+    tttReset.addEventListener('click', resetBoard);
+    updateUI();
+  </script>
+</body>
+</html>
